@@ -1,0 +1,71 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>travblox_wrapper</name>
+  <version>1.0.0</version>
+  <description>Traversability aware extension of voxblox with ros2 support</description>
+
+  <!-- One maintainer tag required, multiple allowed, one person per tag -->
+  <maintainer email="akapat@ltu.se">Akash Patel</maintainer>
+
+  <!-- One license tag required, multiple allowed, one license per tag -->
+  <!-- Commonly used license strings: -->
+  <!--   BSD, MIT, Boost Software License, GPLv2, GPLv3, LGPLv2.1, LGPLv3 -->
+  <license>BSD</license>
+
+  <!-- Build tool dependencies -->
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>ament_cmake_auto</buildtool_depend>
+  <!-- Build dependencies -->
+  <build_depend>rclcpp</build_depend>
+  <build_depend>tf2_ros</build_depend>
+  <build_depend>tf2_geometry_msgs</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>std_srvs</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>visualization_msgs</build_depend>
+  <build_depend>pcl_ros</build_depend>
+  <build_depend>move_base_msgs</build_depend>
+  <build_depend>action_msgs</build_depend>
+  <build_depend>actionlib_msgs</build_depend>
+  <build_depend>voxblox_ros</build_depend>
+  <build_depend>voxblox</build_depend>
+  <build_depend>eigen3_cmake_module</build_depend>
+  <build_depend>eigen3</build_depend>
+  <build_depend>boost</build_depend>
+  <build_depend>grid_map_ros</build_depend>
+  <build_depend>grid_map_msgs</build_depend>
+  
+
+  <build_depend>libgflags-dev</build_depend>
+  <build_depend>libgoogle-glog-dev</build_depend>
+
+
+  <!-- Execution dependencies -->
+  <exec_depend>rclcpp</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
+  <exec_depend>tf2_geometry_msgs</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>std_srvs</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>visualization_msgs</exec_depend>
+  <exec_depend>pcl_ros</exec_depend>
+  <exec_depend>move_base_msgs</exec_depend>
+  <exec_depend>action_msgs</exec_depend>
+  <exec_depend>actionlib_msgs</exec_depend>
+  <exec_depend>voxblox_ros</exec_depend>
+  <exec_depend>voxblox</exec_depend>
+  <exec_depend>eigen3</exec_depend>
+  <exec_depend>boost</exec_depend>
+  <exec_depend>kdtree</exec_depend>
+  <exec_depend>libgflags-dev</exec_depend>
+  <exec_depend>libgoogle-glog-dev</exec_depend>
+  <!-- <exec_depend>traversability_msgs</exec_depend> -->
+  <exec_depend>grid_map_ros</exec_depend>
+  <exec_depend>grid_map_msgs</exec_depend>
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
+

@@ -1,0 +1,144 @@
+/shafterx2/stage_interface_node:
+  ros__parameters:
+    PlanningParams:
+      planner_mode: "kReal" #"kSim" 
+      type: kBasicExploration #kAdaptiveExploration, kBasicExploration
+      rr_mode: kGraph
+      exp_sensor_list: ["OS064"]
+      global_frame_id: "world"
+      pose_graph_update_dist: 0.75 # initialization motion forward m
+      dt: 1.0 # dt for traj 
+      v_max: 2.0 # max velocity m/s
+      v_homing_max: 0.9 # max velocity m/s
+      yaw_rate_max: 0.15 # max angular velocity rad/s
+      yaw_tangent_correction: true # If true - all headings will be along the path segment
+      distance_to_new_path: 0.8
+      distance_to_new_wp: 0.8
+      edge_length_min: -0.2
+      edge_length_max: 2.0
+      local_space: 20.0 
+      path_interpolation_distance: 1.5
+      num_connections_max: 10.0 # maximum edges a vertex can have
+      edge_overshoot: 0.0 # m - Account for possible tracking error by collision checking on an extended edge
+      num_vertices_max: 700.0 # graph building stops if these many vertices are added 
+      num_edges_max: 9000.0 # graph building stops if these many edges are added
+      num_loops_cutoff: 2000.0 # Maximum iterations in which no vertices or edges are added to the graph
+      num_loops_max: 4000.0 # Maximum iterations possible for graph building
+      nearest_range: 2.0 # The max range within which a new vertex can be connected to an existing vertex
+      nearest_range_min: 0.5 # >= edge_length_min
+      nearest_range_max: 2.0 # <= edge_length_max
+      exploration_time_budget: 1800.0 # seconds
+      ## manual mode params 
+      graph_density_scalar: 3.0 # num vertices,edges and loops cutoff is scaled by this factor to make denser or sparse graph in kManualMode. 
+      use_current_state: true # If true, it will use the current state to plan from instead of the state provided by the PCI in the service call
+      use_ray_model_for_volumetric_gain: true # if false, will check voxel by voxel in the sensor frustum 
+      exp_gain_voxel_size: 0.8 # used if use_ray_model_for_volumetric_gain is false
+      # Gains:
+      path_length_penalty: 0.04
+      path_direction_penalty: 0.1
+      occupied_voxel_gain: 0.0
+      free_voxel_gain: 0.0 # prefer directions towards more free voxels in case of the dead-end
+      unknown_voxel_gain: 60.0
+      traverse_length_max: 8.0 # Maximum length of the best path will be truncated to for actual traversal
+      traverse_time_max: 500.0
+      path_safety_enhance_enable: true
+      augment_free_voxels_time: 3.0
+      free_frustum_before_planning: false
+      freespace_cloud_enable: false
+      leafs_only_for_volumetric_gain: true # Whether to calculate gain of the entire path or only the leaf nodes
+      cluster_vertices_for_gain: true
+      clustering_radius: 0.1
+      auto_homing_enable: true
+      go_home_if_fully_explored: true
+      nonuniform_ray_cast: true
+      ray_cast_step_size_multiplier: 1.0
+      geofence_checking_enable: true
+
+    SensorParams:
+      # sensor_list: ["OS064", "fake_cam"]
+      sensor_list: ["OS064"]
+      OS064:
+        type: kLidar
+        max_range: 8.0
+        center_offset: [0.0, 0.0, 0.0]
+        rotations: [0.0, 0.0, 0.0]
+        fov: [6.28319, 0.523599]  # Numerical values for rad(2*pi) and rad(pi/6)
+        resolution: [0.1221, 0.1221] # Numerical values for rad(7*pi/180)
+        frontier_percentage_threshold: 0.1
+      # fake_cam:
+      #   type: kCamera
+      #   max_range: 5.0
+      #   center_offset: [0.0, 0.0, 0.0]
+      #   rotations: [0.0, 0.0, 0.0]
+      #   fov: [6.28319, 0.523599]  # Numerical values for rad(2*pi) and rad(pi/6)
+      #   resolution: [0.1221, 0.1221] # Numerical values for rad(7*pi/180)
+      #   frontier_percentage_threshold: 0.1
+
+    RobotParams:
+      type: kAerialRobot
+      size: [1.2, 1.2, 1.2] # Actual size of the robot in meters [x, y, z]
+      size_extension_min: [0.4, 0.4, 0.4] # minimum extension outside of robot size allowed to operate
+      size_extension: [0.4, 0.4, 0.4] # maximum extension outside of the robot size
+      center_offset: [0.0, 0.0, 0.0]
+      relax_ratio: 0.5 # Used to define an intermediate size between size_extension_min and size_extension for planning
+      bound_mode: kExtendedBound
+      safety_extension: [1.5, 1.5, 1.5] # Safety extension outside the bounding box of a path segment used to improve it by pushing it away from obstacles
+
+    GraphExpansionParams:
+      Global:
+        type: kCuboid
+        min_val: [-3000.0, -3000.0, -300.0]
+        max_val: [3000.0, 3000.0, 300.0]
+      Local:
+        type: kCuboid
+        min_val: [-2.0, -2.0, -2.0]
+        max_val: [2.0, 2.0, 2.0]
+        min_extension: [-2.0, -2.0, -2.0]
+        max_extension: [2.0, 2.0, 2.0]
+      LocalSearch:
+        type: kCuboid
+        min_val: [-50.0, -50.0, -1.0]
+        max_val: [50.0, 50.0, 1.0]
+      # Adaptive OBB:
+      LocalAdaptiveExp:
+        type: kCuboid
+        min_val: [-10.0, -10.0, -0.75]
+        max_val: [10.0, 10.0, 0.75]
+
+    BoundedSpaceParams:
+      Global:
+        type: kCuboid
+        min_val: [-3000.0, -3000.0, -300.0]
+        max_val: [3000.0, 3000.0, 300.0]
+      Local:
+        type: kCuboid
+        min_val: [-15.0, -15.0, -15.0]
+        max_val: [15.0, 15.0, 15.0]
+        min_extension: [-15.0, -15.0, -15.0]
+        max_extension: [15.0, 15.0, 15.0]
+      LocalSearch:
+        type: kCuboid
+        min_val: [-200.0, -200.0, -10.0]
+        max_val: [200.0, 200.0, 10.0]
+      # Adaptive OBB:
+      LocalAdaptiveExp:
+        type: kCuboid
+        min_val: [-10.0, -10.0, -0.75]
+        max_val: [10.0, 10.0, 0.75]
+
+    RandomSamplerParams:
+      SamplerForExploration:
+        X:
+          pdf_type: kUniform
+          sample_mode: kLocal
+        Y:
+          pdf_type: kUniform
+          sample_mode: kLocal
+        Z:
+          pdf_type: kUniform
+          sample_mode: kLocal
+        Heading:
+          pdf_type: kUniform
+          sample_mode: kManual
+          min_val: "rad(-pi)"
+          max_val: "rad(pi)"
