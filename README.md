@@ -1,8 +1,14 @@
-# TravBlox - Voxblox Extension with Traversability Support
+# TravBlox - Voxblox Extension with Traversability and Ros2 Support
 
-[![Build Test](https://github.com/ethz-asl/voxblox/actions/workflows/build_test.yml/badge.svg)](https://github.com/ethz-asl/voxblox/actions/workflows/build_test.yml)
+The travblox wrapper library is added as ros2 pkg however the example code will be added soon:
+  
+Migration Status [@aakapatel](https://github.com/aakapatel)
 
-![voxblox_small](https://cloud.githubusercontent.com/assets/5616392/15180357/536a8776-1781-11e6-8c1d-f2dfa34b1408.gif)
+- [x] Added voxblox with traversability integration
+- [x] Added map manager library
+- [x] Added travblox wrapper as ros2 pkg
+- [ ] Add example code for voxel query and collision check
+- [ ] Add test dataset ealuation for TrabBlox
 
 ## Overview
 
@@ -15,11 +21,17 @@ TravBlox is an extension of the original Voxblox library that adds **traversabil
 3. **Flexible Traversability Sources**: Support for custom pointcloud input sources with "heat" field for traversability integration
 4. **ClipSeg Integration**: Leverages ClipSeg model to generate heatmaps from image prompts, which are then projected onto depth clouds to create traversability-aware pointclouds
 5. **Map Manager Wrapper**: High-level library interface for planning applications with functions for:
-   - Voxel queries at specific positions
-   - Occupancy collision checking
-   - Ray casting
-   - Volumetric gain calculations
-6. **Planning Integration**: Example wrapper code for mapping + planning workflows (coming soon)
+   - Voxel queries at specific positions with traversability information
+   - Occupancy collision checking with multiple collision detection methods
+   - Ray casting with traversability-aware path planning
+   - Volumetric gain calculations for exploration
+   - Local map extraction and management
+   - Robot-specific configurations (ground/aerial robots)
+6. **Planning Integration**: Complete wrapper implementation with:
+   - `travblox_wrapper` package providing the map manager interface
+   - Support for both ground robots (Husky) and aerial robots (ShafterX2/X3)
+   - Configurable parameters for different robot types and environments
+   - Integration with ROS2 navigation and planning frameworks
 
 ### Traversability Integration
 
@@ -29,6 +41,40 @@ The traversability attribute can be sourced from various inputs:
 - **User-Defined Sources**: Flexible framework for custom traversability computation
 
 The system projects depth information onto ClipSeg overlay images, creating pointclouds with RGB and heat fields that are then integrated into the voxel map.
+
+## TravBlox Wrapper Package
+
+The `travblox_wrapper` package provides a complete implementation of the map manager interface, extending Voxblox with traversability-aware planning capabilities:
+
+### Core Features
+- **MapManager Interface**: Abstract base class defining the interface for map operations
+- **MapManagerVoxblox Implementation**: Concrete implementation using Voxblox TSDF/ESDF maps
+- **Traversability Integration**: Direct access to voxel traversability values via `getVoxelTraversability()`
+- **Multi-Method Collision Detection**: Three different collision checking algorithms for different use cases
+- **Robot-Specific Configurations**: Pre-configured settings for ground robots (Husky) and aerial robots (ShafterX2/X3)
+
+### Key Functions
+- `getVoxelStatus()`: Get occupancy status (Unknown/Occupied/Free) at a position
+- `getVoxelTraversability()`: Get traversability value at a position
+- `getRayStatus()`: Ray casting with traversability awareness
+- `getBoxStatus()`: Collision checking for robot bounding boxes
+- `getPathStatus()`: Path validation between two points
+- `extractLocalMap()`: Extract local map regions for planning
+- `getScanStatus()`: Volumetric gain calculation for exploration
+
+### Configuration
+The package includes configuration files for different robot types:
+- **Ground Robots**: `config/ground/` - Husky and simulation configurations
+- **Aerial Robots**: `config/aerial/` - ShafterX2/X3 and simulation configurations
+- **RViz Integration**: `config/rviz/` - Visualization configurations
+
+### Usage
+The wrapper integrates seamlessly with ROS2 planning frameworks and provides a clean API for:
+- Autonomous navigation systems
+- Exploration planners
+- Path planning algorithms
+- Collision avoidance systems
+
 
 ## Related Publication
 
@@ -52,6 +98,9 @@ For questions and support, contact **Akash Patel** ([@aakapatel](https://github.
 # Original Voxblox
 
 TravBlox is built on top of the original Voxblox library. Below is the original Voxblox documentation and credits.
+[![Build Test](https://github.com/ethz-asl/voxblox/actions/workflows/build_test.yml/badge.svg)](https://github.com/ethz-asl/voxblox/actions/workflows/build_test.yml)
+
+![voxblox_small](https://cloud.githubusercontent.com/assets/5616392/15180357/536a8776-1781-11e6-8c1d-f2dfa34b1408.gif)
 
 ## Migration to ROS2
 
