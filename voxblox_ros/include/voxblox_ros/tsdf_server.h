@@ -331,6 +331,24 @@ class TsdfServer {
   /// If the system should subscribe to a pointcloud giving points in freespace
   bool use_freespace_pointcloud_;
 
+  /// --- Dynamic-obstacle clearing via periodic local weight decay ---
+  /// (TravBlox addition.) Voxblox has no forgetting: a STATIONARY sensor never
+  /// clears a removed obstacle because the voxel's accumulated weight out-votes
+  /// the few clearing rays that re-traverse it each scan. Periodically
+  /// multiplying voxel weight near the sensor gives confidence a half-life --
+  /// re-observed surfaces are refreshed by integration and persist, while a
+  /// vacated voxel fades and is reset to unknown/free in bounded time. Scoped to
+  /// a range around the sensor so a far / loaded map is not eroded. Runs on the
+  /// integration thread (right after integratePointcloud) so it never races the
+  /// integrator's worker threads.
+  bool tsdf_decay_enabled_ = false;
+  float tsdf_decay_factor_ = 0.8f;
+  int tsdf_decay_every_n_frames_ = 2;
+  double tsdf_decay_range_m_ = 8.0;
+  float tsdf_decay_clear_below_weight_ = 0.5f;
+  int tsdf_decay_frame_counter_ = 0;
+  void decayTsdfWeightsAroundPoint(const Point& center);
+
   /**
    * Mesh output settings. Mesh is only written to file if mesh_filename_ is
    * not empty.

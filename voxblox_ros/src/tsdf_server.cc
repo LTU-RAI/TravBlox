@@ -203,6 +203,23 @@ void TsdfServer::getServerConfigFromRosParam() {
       node_->declare_parameter("publish_pointclouds", publish_pointclouds_);
   use_freespace_pointcloud_ = node_->declare_parameter(
       "use_freespace_pointcloud", use_freespace_pointcloud_);
+
+  // Dynamic-obstacle clearing via local weight decay (see header). Floats are
+  // read as double then cast, matching the max_weight/truncation pattern below.
+  tsdf_decay_enabled_ =
+      node_->declare_parameter("tsdf_decay_enabled", tsdf_decay_enabled_);
+  double tsdf_decay_factor = tsdf_decay_factor_;
+  tsdf_decay_factor =
+      node_->declare_parameter("tsdf_decay_factor", tsdf_decay_factor);
+  tsdf_decay_factor_ = static_cast<float>(tsdf_decay_factor);
+  tsdf_decay_every_n_frames_ = node_->declare_parameter(
+      "tsdf_decay_every_n_frames", tsdf_decay_every_n_frames_);
+  tsdf_decay_range_m_ =
+      node_->declare_parameter("tsdf_decay_range_m", tsdf_decay_range_m_);
+  double tsdf_decay_clear_below = tsdf_decay_clear_below_weight_;
+  tsdf_decay_clear_below = node_->declare_parameter(
+      "tsdf_decay_clear_below_weight", tsdf_decay_clear_below);
+  tsdf_decay_clear_below_weight_ = static_cast<float>(tsdf_decay_clear_below);
   pointcloud_queue_size_ =
       node_->declare_parameter("pointcloud_queue_size", pointcloud_queue_size_);
   enable_icp_ = node_->declare_parameter("enable_icp", enable_icp_);
@@ -418,8 +435,57 @@ void TsdfServer::processPointCloudMessageAndInsert(
                                 max_block_distance_from_body_);
   block_remove_timer.Stop();
 
+  // Dynamic-obstacle clearing: periodically decay voxel confidence near the
+  // sensor so a removed obstacle fades (re-observed surfaces were just
+  // refreshed by integratePointcloud above). Same thread as integration -> no
+  // race with the integrator's worker threads.
+  if (tsdf_decay_enabled_ &&
+      (++tsdf_decay_frame_counter_ >= tsdf_decay_every_n_frames_)) {
+    tsdf_decay_frame_counter_ = 0;
+    decayTsdfWeightsAroundPoint(T_G_C.getPosition());
+  }
+
   // Callback for inheriting classes.
   newPoseCallback(T_G_C);
+}
+
+void TsdfServer::decayTsdfWeightsAroundPoint(const Point& center) {
+  Layer<TsdfVoxel>* layer = tsdf_map_->getTsdfLayerPtr();
+  const float block_size = layer->block_size();
+  const float trunc = tsdf_integrator_config.default_truncation_distance;
+  const float range = static_cast<float>(tsdf_decay_range_m_);
+  const float range_sq = range * range;
+  const float block_cull_sq = (range + block_size) * (range + block_size);
+
+  BlockIndexList blocks;
+  layer->getAllAllocatedBlocks(&blocks);
+  for (const BlockIndex& bidx : blocks) {
+    Block<TsdfVoxel>::Ptr block = layer->getBlockPtrByIndex(bidx);
+    if (!block) continue;
+    // Cull blocks fully outside the decay range so the far / loaded map is
+    // untouched.
+    const Point block_center =
+        block->origin() + Point::Constant(0.5f * block_size);
+    if ((block_center - center).squaredNorm() > block_cull_sq) continue;
+
+    bool changed = false;
+    const size_t num_voxels = block->num_voxels();
+    for (size_t i = 0; i < num_voxels; ++i) {
+      TsdfVoxel& voxel = block->getVoxelByLinearIndex(i);
+      if (voxel.weight < 1e-6f) continue;  // already unknown
+      const Point coord = block->computeCoordinatesFromLinearIndex(i);
+      if ((coord - center).squaredNorm() > range_sq) continue;
+      voxel.weight *= tsdf_decay_factor_;
+      if (voxel.weight < tsdf_decay_clear_below_weight_) {
+        // Reset to unknown + free distance so every occupancy check (weight- or
+        // distance-based) treats it as no-longer-occupied.
+        voxel.weight = 0.0f;
+        voxel.distance = trunc;
+      }
+      changed = true;
+    }
+    if (changed) block->updated().set();
+  }
 }
 
 // Checks if we can get the next message from queue.
